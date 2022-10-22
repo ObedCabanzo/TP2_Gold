@@ -1,0 +1,68 @@
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+
+using gold.structures.set.*
+
+//  Strings of {a,b,c}
+//  Even number of a’s
+// c cannot appear in positions that are multiples of 3.
+// No two consecutive b’s
+
+
+procedure main(args:String[]) begin
+	
+	
+	A:= {'a','b','c','d','e'}
+	Σ:= ('a'‥ 'e')
+	Q:= ( ℘(A) ∪ {'Z'}	× {0,1,2}  × ℘(A) ∪ {'Z'}	× {0,1,2}  ) ∪ {"err"}
+	q₀:= ⟨ 'Z' , 0 , 'Z' , 0⟩
+	F:=  ⟨ 'Z'  , 3 , 'Z' , 3⟩ 
+	
+	M:=GDeterministicAutomaton(Q,Σ,q₀,F,d)
+	
+	// if you run the program  with GUI as an argument it will generate the viewing window
+	//  if not you can test it via the console
+	
+	if (args.length != 0  and args[0]="GUI") then
+		GAutomataFrame.show(M)
+	else
+		Utilities.test(M) // function found in utilities .
+	end
+end
+
+
+function d(q,x) begin // q=err
+  return q
+end
+
+function d(⟨letra1, contador1, letra2 , contador2⟩, letraInput) begin
+	// Se usa una cuadrupla para llevar memoria de las dos letras mas recientes, anteriores al input, 
+	// junto con dos enteros que cuentan el numero de apariciones de cada letra. 
+	//El automata fallara cuando el llegue un input igual a alguna de las dos letras y su contador sea menor a 2.
+	
+	// En el caso inicial (Ø, 0, Ø, 0), solo se reemplaza la primera letra por el input, y empieza su debido contador en 0
+	if letra1 = Ø then return ⟨ letraInput , 0 , letra2 , contador2  ⟩	
+	
+	// En el segundo caso ( letraReciente, 0 + 1 , Ø, 0 ), solo se reemplaza la segunda letra por el input, y empieza su debido contador en 0
+	// Ademas se suma uno en el contador de la primera letra. 
+	elseif letra2 = Ø then return ⟨ letra1 , contador1+1 , letraInput , 0  ⟩		
+	
+	// En los dos casos siguientes el estado actual tendrá el siguiente aspecto: ( letraReciente1, contador1 , letraReciente2,contador2 )
+	
+	// Si llega un input diferente a los dos mas recientes y el contador va en 1 o mas, se podrá quitar alguno de los mas recientes 
+	// para añadir el nuevo input con su contador en 0
+	elseif contador1 >= 1 and letra1 != letraInput then return ⟨ letraInput , 0 , letra2 , contador2+1  ⟩
+		
+	elseif contador2 >= 1 and letra2 != letraInput then return ⟨ letra1 , contador1 +1  , letraInput , 0  ⟩
+		
+	
+	//Si llega un input igual a alguno de los dos mas recientes, y su contador indica menos que 2, entonces el automata fallará 
+	// pues no han pasado 2 letras para que pueda volver a aparecer
+		
+	elseif ( letra1 = letraInput and contador1 < 2) or  ( letra2 = letraInput and contador2 < 2)   then return "err"	
+		
+		// as long as what we read is not in the set and we don't read x'
+	else return "err"
+	end
+end
+
